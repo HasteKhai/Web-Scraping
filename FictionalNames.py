@@ -2,6 +2,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from collections import deque
+import re
+
 
 BASE_URL = "https://en.wikipedia.org"
 
@@ -29,22 +31,26 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract subcategories
         subcategories = data.select("#mw-subcategories a ")
         for subcat in subcategories:
-            if len(queue) == 10:
+            if len(queue) == 30:
                 break
             if "href" in subcat.attrs:
                 subcat_url = BASE_URL + subcat["href"]
                 queue.append((subcat_url, depth + 1))  # Add to queue
                 print(" " * depth * 2 + f"-> Exploring subcategory: {subcat.text}")
 
+
+        def clean_name(char_name):
+            return re.sub(r"\s*\(.*?\)", "", char_name).strip()
+
         # Extract character pages
         character_links = data.select("#mw-pages a")
         for link in character_links:
-            if len(character_pages) == 50:
+            if len(character_pages) == 3000:
                 break
             if "href" in link.attrs:
-                char_name = link.text
+                char_name = clean_name(link.text)
                 if (char_name == "This list may not reflect recent changes" or "List of" in char_name or
-                        "Lists of" in char_name or 'Character (arts)' in char_name):
+                        "Lists of" in char_name or 'Character (arts)' in char_name or '0' in char_name):
                     continue
                 character_pages.append(char_name)
                 print(" " * depth * 2 + f"--> Found character: {char_name}")
@@ -58,3 +64,6 @@ for name in character_pages:
     print(f"{name}")
 
 print(pd.DataFrame(character_pages, columns=['Character Name']))
+
+df = pd.DataFrame(character_pages)
+df.to_csv('Name_Similarity_Dataset.csv', index=False)
