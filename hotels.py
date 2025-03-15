@@ -43,6 +43,8 @@ for card in cards_data:
     card_details['room_price'] = room_price.text
 
     scraped_data.append(card_details)
+for card_details in scraped_data:
+    print(card_details)
 
 dataframe = pd.DataFrame(scraped_data)
 
