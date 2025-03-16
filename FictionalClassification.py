@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from Levenshtein import distance as levenshtein_distance
@@ -9,6 +8,7 @@ from metaphone import doublemetaphone
 import nltk
 from nltk.corpus import words
 import swifter
+from nltk.tokenize import word_tokenize
 
 df = pd.read_csv('MainDataset.csv')
 balanced_Real_Reference = pd.read_csv('Balanced_Real_Reference_List.csv')
@@ -17,10 +17,15 @@ balanced_Fictional_Reference = pd.read_csv('Balanced_Fictional_Reference_List.cs
 reference_real = balanced_Real_Reference['Name'].tolist()
 reference_fictional = balanced_Fictional_Reference['Name'].tolist()
 
+from rapidfuzz import process, fuzz
+from rapidfuzz.distance import Levenshtein
 def levenshtein(name, reference):
-    if not reference:
-        return np.nan
-    return min(levenshtein_distance(name, ref) for ref in reference)
+    # Find best match and its similarity score
+    best_match, score, _ = process.extractOne(name, reference, scorer=fuzz.ratio)
+    # Compute Levenshtein distance
+    lev_distance = Levenshtein.distance(name, best_match)
+
+    return lev_distance
 
 
 df['levenshtein_real'] = df['Name'].swifter.apply(lambda x: levenshtein(x, reference_real))
@@ -28,10 +33,11 @@ df['levenshtein_fictional'] = df['Name'].swifter.apply(lambda x: levenshtein(x, 
 
 
 
-def fuzzy_match(name1, reference):
-    if not reference:
-        return np.nan
-    return max(fuzz.ratio(name1, ref) for ref in reference)
+def fuzzy_match(name, reference):
+    # Find best match and its similarity score
+    best_match, score, _ = process.extractOne(name, reference, scorer=fuzz.ratio)
+
+    return score
 
 
 df['fuzzy_real'] = df['Name'].swifter.progress_bar(True).apply(lambda x: fuzzy_match(x, reference_real))
@@ -43,8 +49,9 @@ reference_real_metaphone = {name: doublemetaphone(name)[0] for name in reference
 reference_fictional_metaphone = {name: doublemetaphone(name)[0] for name in reference_fictional}
 
 def double_metaphone_match(name, reference_set):
-    encoded_name = doublemetaphone(name)[0]  # Compute once
-    return 1 if encoded_name in reference_set.values() else 0  # Fast lookup
+    encoding = doublemetaphone(name)[0]  # Only use the primary encoding
+    return 1 if encoding in reference_set.values() else 0
+
 
 
 df['double_metaphone_real'] = (df['Name'].swifter.progress_bar(True).
@@ -56,12 +63,11 @@ df['double_metaphone_fictional'] = (df['Name'].swifter.progress_bar(True).
 nltk.download('words')
 english_words = set(words.words())
 
+nltk.download('punkt_tab')
+#Tokenization better than .split(), avoiding issues with splitting punctuations and special characters
 def is_dictionary_word(name):
-    name_parts = name.lower().split()
-    for word in name_parts:
-        if word in english_words:
-            return 1  # Found a dictionary word
-    return 0  # No dictionary words found
+    tokens = word_tokenize(name.lower())
+    return int(any(word in english_words for word in tokens))
 
 
 df['is_dictionary_word'] = df['Name'].apply(is_dictionary_word)
@@ -70,10 +76,10 @@ df['is_dictionary_word'] = df['Name'].apply(is_dictionary_word)
 X = df[['levenshtein_real', 'levenshtein_fictional', 'fuzzy_real', 'fuzzy_fictional',
         'double_metaphone_real', 'double_metaphone_fictional', 'is_dictionary_word']]
 y = df['Label']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-model = RandomForestClassifier(n_estimators=50, random_state=42)
+model = RandomForestClassifier(n_estimators=150, max_depth=20, random_state=42)
 
 
 model.fit(X_train, y_train)

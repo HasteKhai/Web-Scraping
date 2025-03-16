@@ -45,7 +45,7 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract character pages
         character_links = data.select("#mw-pages a")
         for link in character_links:
-            if len(character_pages) == 10000:
+            if len(character_pages) == 30000:
                 break
             if "href" in link.attrs:
                 char_name = clean_name(link.text)

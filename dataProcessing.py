@@ -12,7 +12,7 @@ reference_fictional.extend(fictional_names['Name'].head(5000).tolist())
 
 # Load real names
 first_names = pd.read_csv("common-forenames.csv")
-surnames = pd.read_csv("surnames.csv").sample(n=5000, random_state=42)
+surnames = pd.read_csv("surnames.csv")
 external = pd.read_csv('Customer_Names.csv')
 
 # Generate unique real name combinations
