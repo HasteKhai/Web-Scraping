@@ -5,9 +5,9 @@ import pandas as pd
 # Load model and references
 model = joblib.load('fictional_name_classifier.pkl')
 reference_real = joblib.load('reference_real.pkl')
-print(len(reference_real))
 reference_fictional = joblib.load('reference_fictional.pkl')
-print(len(reference_fictional))
+
+
 def predict_fictionality(name):
     lev_real = levenshtein(name, reference_real)
     lev_fictional = levenshtein(name, reference_fictional)
@@ -23,8 +23,25 @@ def predict_fictionality(name):
 
     # Predict with RandomForestClassifier
     prediction = model.predict(features)
-    print(lev_real, lev_fictional, fuzzy_real, fuzzy_fictional)
+    print("\n📌 **Name Analysis:**", name)
+    print(f"🔹 Levenshtein Distance (Real):       {lev_real}")
+    print(f"🔹 Levenshtein Distance (Fictional):  {lev_fictional}")
+    print(f"🔹 Fuzzy Matching (Real):            {fuzzy_real}")
+    print(f"🔹 Fuzzy Matching (Fictional):       {fuzzy_fictional}")
+    print(f"🔹 Soundex Match (Real):             {'✅ Match' if soundex_real else '❌ No Match'}")
+    print(f"🔹 Soundex Match (Fictional):        {'✅ Match' if soundex_fictional else '❌ No Match'}")
     return 'Fictional' if prediction[0] == 1 else 'Non-Fictional'
+
 
 # Example Prediction
 print(predict_fictionality("Froddo Baggins"))
+print(predict_fictionality("Alexandre"))
+print(predict_fictionality("Orange"))
+print(predict_fictionality("Dryad"))
+print(predict_fictionality("Batman"))
+print(predict_fictionality("Apple"))
+print(predict_fictionality("Timothy Smay"))
+print(predict_fictionality("Christina Perez"))
+print(predict_fictionality("Alexandre Gagnon"))
+print(predict_fictionality("Jack Sparrow"))
+print(predict_fictionality("Eric Brault"))

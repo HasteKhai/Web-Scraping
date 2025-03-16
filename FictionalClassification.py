@@ -61,10 +61,6 @@ model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
-# Evaluate Model
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print(classification_report(y_test, y_pred))
-
 joblib.dump(model, 'fictional_name_classifier.pkl')
 joblib.dump(reference_real, 'reference_real.pkl')
 joblib.dump(reference_fictional, 'reference_fictional.pkl')
