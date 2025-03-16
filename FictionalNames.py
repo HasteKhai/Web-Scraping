@@ -31,7 +31,7 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract subcategories
         subcategories = data.select("#mw-subcategories a ")
         for subcat in subcategories:
-            if len(queue) == 30:
+            if len(queue) == 20:
                 break
             if "href" in subcat.attrs:
                 subcat_url = BASE_URL + subcat["href"]
@@ -45,14 +45,15 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract character pages
         character_links = data.select("#mw-pages a")
         for link in character_links:
-            if len(character_pages) == 3000:
+            if len(character_pages) == 100:
                 break
             if "href" in link.attrs:
                 char_name = clean_name(link.text)
                 if (char_name == "This list may not reflect recent changes" or "List of" in char_name or
-                        "Lists of" in char_name or 'Character (arts)' in char_name or '0' in char_name):
+                        "Lists of" in char_name or 'Character' in char_name or '0' in char_name):
                     continue
-                character_pages.append(char_name)
+                if not character_pages.__contains__(char_name):
+                    character_pages.append(char_name)
                 print(" " * depth * 2 + f"--> Found character: {char_name}")
 
 # Scrape the Wikipedia Page
