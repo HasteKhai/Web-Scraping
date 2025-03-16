@@ -35,7 +35,8 @@ def predict_fictionality(name):
 
 
 # Example Prediction
-print(predict_fictionality("Froddo Baggins"))
+print(predict_fictionality("Knee"))
+print(predict_fictionality("Mickey Mouse"))
 print(predict_fictionality("Alexandre"))
 print(predict_fictionality("Orange"))
 print(predict_fictionality("Dryad"))
@@ -46,3 +47,6 @@ print(predict_fictionality("Christina Perez"))
 print(predict_fictionality("Alexandre Gagnon"))
 print(predict_fictionality("Jack Sparrow"))
 print(predict_fictionality("Eric Brault"))
+print(predict_fictionality("Kane Yu-Kis Mi"))
+print(predict_fictionality("Ai Wan Tyu"))
+print(predict_fictionality("Youssef Hamza"))
