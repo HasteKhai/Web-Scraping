@@ -31,7 +31,7 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract subcategories
         subcategories = data.select("#mw-subcategories a ")
         for subcat in subcategories:
-            if len(queue) == 20:
+            if len(queue) == 30:
                 break
             if "href" in subcat.attrs:
                 subcat_url = BASE_URL + subcat["href"]
@@ -45,7 +45,7 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract character pages
         character_links = data.select("#mw-pages a")
         for link in character_links:
-            if len(character_pages) == 100:
+            if len(character_pages) == 2000:
                 break
             if "href" in link.attrs:
                 char_name = clean_name(link.text)
@@ -66,5 +66,5 @@ for name in character_pages:
 
 print(pd.DataFrame(character_pages, columns=['Character Name']))
 
-df = pd.DataFrame(character_pages)
-df.to_csv('Name_Similarity_Dataset.csv', index=False)
+df = pd.DataFrame(character_pages, columns=['Name'])
+df.to_csv('Fictional_Names.csv', index=False)
