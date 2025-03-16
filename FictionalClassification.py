@@ -10,6 +10,8 @@ import joblib
 from metaphone import doublemetaphone
 import nltk
 from nltk.corpus import words
+from sklearn.linear_model import LogisticRegression
+
 
 fictional_names = pd.read_csv("Fictional_Names.csv")
 reference_fictional = fictional_names['Name'].tolist()
@@ -81,13 +83,7 @@ y = df['Label']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 
-model = RandomForestClassifier(
-    n_estimators=50,         # Reduce the number of trees (to avoid memorization)
-    max_depth=3,             # Further limit tree depth
-    min_samples_split=10,    # Require at least 10 samples to split a node
-    min_samples_leaf=4,      # Require at least 4 samples per leaf
-    random_state=42
-)
+model = LogisticRegression(C=0.1, penalty='l2', max_iter=500)
 
 
 model.fit(X_train, y_train)
