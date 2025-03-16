@@ -1,4 +1,4 @@
-from FictionalClassification import levenshtein, fuzzy_match, soundex_match
+from FictionalClassification import levenshtein, fuzzy_match, double_metaphone_match
 import joblib
 import pandas as pd
 
@@ -6,20 +6,21 @@ import pandas as pd
 model = joblib.load('fictional_name_classifier.pkl')
 reference_real = joblib.load('reference_real.pkl')
 reference_fictional = joblib.load('reference_fictional.pkl')
-
-
+reference_real_metaphone = joblib.load('reference_real_metaphone.pkl')
+reference_fictional_metaphone = joblib.load('reference_fictional_metaphone.pkl')
 def predict_fictionality(name):
     lev_real = levenshtein(name, reference_real)
     lev_fictional = levenshtein(name, reference_fictional)
     fuzzy_real = fuzzy_match(name, reference_real)
     fuzzy_fictional = fuzzy_match(name, reference_fictional)
-    soundex_real = soundex_match(name, reference_real)
-    soundex_fictional = soundex_match(name, reference_fictional)
+    doublemetaphone_real = double_metaphone_match(name, reference_real_metaphone)
+    doublemetaphone_fict = double_metaphone_match(name, reference_fictional_metaphone)
 
     # Ensure features are a DataFrame with the correct column names
-    features = pd.DataFrame([[lev_real, lev_fictional, fuzzy_real, fuzzy_fictional, soundex_real, soundex_fictional]],
+    features = pd.DataFrame([[lev_real, lev_fictional, fuzzy_real, fuzzy_fictional, doublemetaphone_real,
+                              doublemetaphone_fict]],
                             columns=['levenshtein_real', 'levenshtein_fictional', 'fuzzy_real', 'fuzzy_fictional',
-                                     'soundex_real', 'soundex_fictional'])
+                                     'double_metaphone_real', 'double_metaphone_fictional'])
 
     # Predict with RandomForestClassifier
     prediction = model.predict(features)
@@ -28,8 +29,8 @@ def predict_fictionality(name):
     print(f"🔹 Levenshtein Distance (Fictional):  {lev_fictional}")
     print(f"🔹 Fuzzy Matching (Real):            {fuzzy_real}")
     print(f"🔹 Fuzzy Matching (Fictional):       {fuzzy_fictional}")
-    print(f"🔹 Soundex Match (Real):             {'✅ Match' if soundex_real else '❌ No Match'}")
-    print(f"🔹 Soundex Match (Fictional):        {'✅ Match' if soundex_fictional else '❌ No Match'}")
+    print(f"🔹 DMetaphone Match (Real):             {'✅ Match' if doublemetaphone_real else '❌ No Match'}")
+    print(f"🔹 DMetaphone Match (Fictional):        {'✅ Match' if doublemetaphone_fict else '❌ No Match'}")
     return 'Fictional' if prediction[0] == 1 else 'Non-Fictional'
 
 

@@ -7,6 +7,7 @@ from Levenshtein import distance as levenshtein_distance
 from rapidfuzz import fuzz
 from jellyfish import soundex
 import joblib
+from metaphone import doublemetaphone
 
 fictional_names = pd.read_csv("Fictional_Names.csv")
 reference_fictional = fictional_names['Name'].tolist()
@@ -44,16 +45,21 @@ def fuzzy_match(name1, reference):
 df['fuzzy_real'] = df['Name'].apply(lambda x: fuzzy_match(x, reference_real))
 df['fuzzy_fictional'] = df['Name'].apply(lambda x: fuzzy_match(x, reference_fictional))
 
-def soundex_match(name, reference):
-    encoded_name = soundex(name)
-    return max(1 if soundex(ref) == encoded_name else 0 for ref in reference)
 
+# Precompute Metaphone for all reference names
+reference_real_metaphone = {name: doublemetaphone(name)[0] for name in reference_real}
+reference_fictional_metaphone = {name: doublemetaphone(name)[0] for name in reference_fictional}
 
-df['soundex_real'] = df['Name'].apply(lambda x: soundex_match(x, reference_real))
-df['soundex_fictional'] = df['Name'].apply(lambda x: soundex_match(x, reference_fictional))
+def double_metaphone_match(name, reference_set):
+    encoded_name = doublemetaphone(name)[0]  # Compute once
+    return 1 if encoded_name in reference_set.values() else 0  # Fast lookup
+
+df['double_metaphone_real'] = df['Name'].apply(lambda x: double_metaphone_match(x, reference_real_metaphone))
+df['double_metaphone_fictional'] = df['Name'].apply(lambda x: double_metaphone_match(x, reference_fictional_metaphone))
+
 
 X = df[['levenshtein_real', 'levenshtein_fictional', 'fuzzy_real', 'fuzzy_fictional',
-        'soundex_real', 'soundex_fictional']]
+        'double_metaphone_real', 'double_metaphone_fictional']]
 y = df['Label']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
@@ -64,3 +70,5 @@ y_pred = model.predict(X_test)
 joblib.dump(model, 'fictional_name_classifier.pkl')
 joblib.dump(reference_real, 'reference_real.pkl')
 joblib.dump(reference_fictional, 'reference_fictional.pkl')
+joblib.dump(reference_real_metaphone, 'reference_real_metaphone.pkl')
+joblib.dump(reference_fictional_metaphone, 'reference_fictional_metaphone.pkl')
