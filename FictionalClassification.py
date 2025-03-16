@@ -2,33 +2,20 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
 from Levenshtein import distance as levenshtein_distance
 from rapidfuzz import fuzz
-from jellyfish import soundex
 import joblib
 from metaphone import doublemetaphone
 import nltk
 from nltk.corpus import words
-from sklearn.linear_model import LogisticRegression
+import swifter
 
+df = pd.read_csv('MainDataset.csv')
+balanced_Real_Reference = pd.read_csv('Balanced_Real_Reference_List.csv')
+balanced_Fictional_Reference = pd.read_csv('Balanced_Fictional_Reference_List.csv')
 
-fictional_names = pd.read_csv("Fictional_Names.csv")
-reference_fictional = fictional_names['Name'].tolist()
-fictional_names['Label'] = 1  # Ref list for fictional names
-df1 = pd.DataFrame(fictional_names)
-
-real_names2 = pd.read_csv
-
-real_names = pd.read_csv("Customer_Names.csv")
-real_names['Name'] = real_names['First Name'] + " " + real_names['Last Name']
-real_names = real_names[['Name']]
-reference_real = real_names['Name'].tolist()  # Ref list for real names
-real_names['Label'] = 0
-df2 = pd.DataFrame(real_names)
-
-df = pd.concat([fictional_names, real_names])
-
+reference_real = balanced_Real_Reference['Name'].tolist()
+reference_fictional = balanced_Fictional_Reference['Name'].tolist()
 
 def levenshtein(name, reference):
     if not reference:
@@ -36,8 +23,9 @@ def levenshtein(name, reference):
     return min(levenshtein_distance(name, ref) for ref in reference)
 
 
-df['levenshtein_real'] = df['Name'].apply(lambda x: levenshtein(x, reference_real))
-df['levenshtein_fictional'] = df['Name'].apply(lambda x: levenshtein(x, reference_fictional))
+df['levenshtein_real'] = df['Name'].swifter.apply(lambda x: levenshtein(x, reference_real))
+df['levenshtein_fictional'] = df['Name'].swifter.apply(lambda x: levenshtein(x, reference_fictional))
+
 
 
 def fuzzy_match(name1, reference):
@@ -46,8 +34,8 @@ def fuzzy_match(name1, reference):
     return max(fuzz.ratio(name1, ref) for ref in reference)
 
 
-df['fuzzy_real'] = df['Name'].apply(lambda x: fuzzy_match(x, reference_real))
-df['fuzzy_fictional'] = df['Name'].apply(lambda x: fuzzy_match(x, reference_fictional)*3)
+df['fuzzy_real'] = df['Name'].swifter.progress_bar(True).apply(lambda x: fuzzy_match(x, reference_real))
+df['fuzzy_fictional'] = df['Name'].swifter.progress_bar(True).apply(lambda x: fuzzy_match(x, reference_fictional))
 
 
 # Precompute Metaphone for all reference names
@@ -59,8 +47,10 @@ def double_metaphone_match(name, reference_set):
     return 1 if encoded_name in reference_set.values() else 0  # Fast lookup
 
 
-df['double_metaphone_real'] = df['Name'].apply(lambda x: double_metaphone_match(x, reference_real_metaphone))
-df['double_metaphone_fictional'] = df['Name'].apply(lambda x: double_metaphone_match(x, reference_fictional_metaphone))
+df['double_metaphone_real'] = (df['Name'].swifter.progress_bar(True).
+                               apply(lambda x: double_metaphone_match(x, reference_real_metaphone)))
+df['double_metaphone_fictional'] = (df['Name'].swifter.progress_bar(True).
+                                    apply(lambda x: double_metaphone_match(x, reference_fictional_metaphone)))
 
 
 nltk.download('words')
@@ -78,16 +68,17 @@ df['is_dictionary_word'] = df['Name'].apply(is_dictionary_word)
 
 
 X = df[['levenshtein_real', 'levenshtein_fictional', 'fuzzy_real', 'fuzzy_fictional',
-        'double_metaphone_real', 'double_metaphone_fictional','is_dictionary_word']]
+        'double_metaphone_real', 'double_metaphone_fictional', 'is_dictionary_word']]
 y = df['Label']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 
-model = LogisticRegression(C=0.1, penalty='l2', max_iter=500)
+model = RandomForestClassifier(n_estimators=50, random_state=42)
 
 
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
+
 
 joblib.dump(model, 'fictional_name_classifier.pkl')
 joblib.dump(reference_real, 'reference_real.pkl')
@@ -97,7 +88,7 @@ joblib.dump(reference_fictional_metaphone, 'reference_fictional_metaphone.pkl')
 
 from sklearn.model_selection import cross_val_score
 
-cv_scores = cross_val_score(model, X_train, y_train, cv=5)
+cv_scores = cross_val_score(model, X_train, y_train, cv=10)
 print(f"Cross-Validation Scores: {cv_scores}")
 print(f"Mean CV Score: {cv_scores.mean():.4f}")
 

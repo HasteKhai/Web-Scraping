@@ -8,25 +8,23 @@ reference_real = joblib.load('reference_real.pkl')
 reference_fictional = joblib.load('reference_fictional.pkl')
 reference_real_metaphone = joblib.load('reference_real_metaphone.pkl')
 reference_fictional_metaphone = joblib.load('reference_fictional_metaphone.pkl')
+
+precomputed_features = pd.read_csv('precomputed_features.csv')
 def predict_fictionality(name):
-    lev_real = levenshtein(name, reference_real)
-    lev_fictional = levenshtein(name, reference_fictional)
-    fuzzy_real = fuzzy_match(name, reference_real)
-    fuzzy_fictional = fuzzy_match(name, reference_fictional)
-    doublemetaphone_real = double_metaphone_match(name, reference_real_metaphone)
-    doublemetaphone_fict = double_metaphone_match(name, reference_fictional_metaphone)
-    dict_word = is_dictionary_word(name)
-
-    if dict_word == 1:
-        fuzzy_fictional *= 1.5  # Increase importance of fictional match
-        lev_fictional *= 1.3  # Increase impact on edit distance
-        doublemetaphone_fict *= 1.2  # Boost phonetic influence
-
-    lev_real *= 0.6
-    lev_fictional *= 0.7  # Lowered from 0.8 to 0.7
-
-    doublemetaphone_real *= 2.5
-    doublemetaphone_fict *= 2.8
+    row = precomputed_features[precomputed_features['Name'] == name]
+    if not row.empty:
+        features = row[['levenshtein_real', 'levenshtein_fictional', 'fuzzy_real',
+                        'fuzzy_fictional', 'double_metaphone_real', 'double_metaphone_fictional',
+                        'is_dictionary_word']]
+        prediction = model.predict_proba(features)[0][1]
+    else:
+        lev_real = levenshtein(name, reference_real)
+        lev_fictional = levenshtein(name, reference_fictional)
+        fuzzy_real = fuzzy_match(name, reference_real)
+        fuzzy_fictional = fuzzy_match(name, reference_fictional)
+        doublemetaphone_real = double_metaphone_match(name, reference_real_metaphone)
+        doublemetaphone_fict = double_metaphone_match(name, reference_fictional_metaphone)
+        dict_word = is_dictionary_word(name)
 
     # Ensure features are a DataFrame with the correct column names
     features = pd.DataFrame([[lev_real, lev_fictional, fuzzy_real, fuzzy_fictional, doublemetaphone_real,
@@ -38,7 +36,7 @@ def predict_fictionality(name):
     prob_fictional = model.predict_proba(features)[0][1]
 
     # Adjusted Threshold (was 0.5)
-    threshold = 0.56  # Increase threshold to reduce false positives
+    threshold = 0.8  # Increase threshold to reduce false positives
     prediction = 1 if prob_fictional > threshold else 0
 
     # Predict with RandomForestClassifier
@@ -55,7 +53,7 @@ def predict_fictionality(name):
 
 
 # Example Prediction
-print(predict_fictionality("Knee Ger"))
+print(predict_fictionality("Knee Ellen"))
 print(predict_fictionality("Mickey Mouse"))
 print(predict_fictionality("Mickey Mousse"))
 print(predict_fictionality("Alexandre"))
@@ -73,7 +71,7 @@ print(predict_fictionality("Kane Yu-Kis Mi"))
 print(predict_fictionality("Ai Wan Tyu"))
 print(predict_fictionality("Youssef Hamza"))
 print(predict_fictionality("Sonia Creo"))
-
+print(predict_fictionality("khai Trinh"))
 
 # Get feature importance scores
 feature_importance = model.feature_importances_

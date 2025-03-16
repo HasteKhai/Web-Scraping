@@ -31,7 +31,7 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract subcategories
         subcategories = data.select("#mw-subcategories a ")
         for subcat in subcategories:
-            if len(queue) == 50:
+            if len(queue) == 150:
                 break
             if "href" in subcat.attrs:
                 subcat_url = BASE_URL + subcat["href"]
@@ -45,7 +45,7 @@ def scrape_wikipedia_category(start_url, max_depth=5):
         # Extract character pages
         character_links = data.select("#mw-pages a")
         for link in character_links:
-            if len(character_pages) == 5000:
+            if len(character_pages) == 10000:
                 break
             if "href" in link.attrs:
                 char_name = clean_name(link.text)
