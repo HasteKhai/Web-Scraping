@@ -8,6 +8,8 @@ reference_real = joblib.load('reference_real.pkl')
 reference_fictional = joblib.load('reference_fictional.pkl')
 reference_real_metaphone = joblib.load('reference_real_metaphone.pkl')
 reference_fictional_metaphone = joblib.load('reference_fictional_metaphone.pkl')
+
+
 def predict_fictionality(name):
     lev_real = levenshtein(name, reference_real)
     lev_fictional = levenshtein(name, reference_fictional)
@@ -25,8 +27,8 @@ def predict_fictionality(name):
     # Get Probabilities
     prob_fictional = model.predict_proba(features)[0][1]
 
-    # Adjusted Threshold (was 0.5)
-    threshold = 0.8  # Increase threshold to reduce false positives
+    # Set a threshold
+    threshold = 0.8
     prediction = 1 if prob_fictional >= threshold else 0
 
     # Predict with RandomForestClassifier
@@ -44,13 +46,15 @@ def predict_fictionality(name):
 
 # Example Prediction
 print(predict_fictionality("Froddo Baggins"))
+print(predict_fictionality("Robinhood Smith"))
+print(predict_fictionality("Wolf Heimer"))
 print(predict_fictionality("Knee Ellen"))
 print(predict_fictionality("Mickey Mouse"))
 print(predict_fictionality("Mickey Mousse"))
-print(predict_fictionality("Alexandre"))
+print(predict_fictionality("Harry Potter"))
+print(predict_fictionality("Ice Queen"))
 print(predict_fictionality("Orange"))
-print(predict_fictionality("Oranga"))
-print(predict_fictionality("Dryad"))
+print(predict_fictionality("Annie Ngo"))
 print(predict_fictionality("Batman"))
 print(predict_fictionality("Bootman"))
 print(predict_fictionality("Apple"))
@@ -63,7 +67,11 @@ print(predict_fictionality("Kane Yu-Kis Mi"))
 print(predict_fictionality("Ai Wan Tyu"))
 print(predict_fictionality("Youssef Hamza"))
 print(predict_fictionality("Sonia Creo"))
-print(predict_fictionality("khai Trinh"))
+print(predict_fictionality("Mary Wang"))
+print(predict_fictionality("Shawn Mendez"))
+print(predict_fictionality("Sean Maindeez"))
+print(predict_fictionality("Affan Pazheri"))
+print(predict_fictionality("YanTao Wang"))
 
 # Get feature importance scores
 feature_importance = model.feature_importances_
