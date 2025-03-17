@@ -72,11 +72,13 @@ def is_dictionary_word(name):
 
 df['is_dictionary_word'] = df['Name'].apply(is_dictionary_word)
 
-df['double_metaphone_real'] *= 5
+df['is_dictionary_word_weighted'] = df['is_dictionary_word'] * 100
 df['double_metaphone_fictional'] *= 3
 df['fuzzy_real'] *= 0.85
 df['fuzzy_fictional'] *= 0.75
-df['is_dictionary_word'] = df['is_dictionary_word'] * df['fuzzy_fictional']
+
+df.loc[df['is_dictionary_word'] == 1, ['fuzzy_real', 'levenshtein_real']] *= 1.5
+
 
 # GirdSearch on RF
 param_grid = {
